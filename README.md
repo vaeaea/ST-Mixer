@@ -4,7 +4,7 @@ A Seasonality and Trend Mixing Model with Multi-downsampling Fusion Structures f
 Upload full code as soon as research is accepted
 
 <p align="center">
-  <img src="ModelArchitecture.pdf" width="300"  alt="SRCA">
+  <img src="ModelArchitecture.png" width="300"  alt="ST-Mixer">
 </p>
 
 #### Performance on Benchmarks   
