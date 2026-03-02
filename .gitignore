@@ -1,0 +1,12 @@
+/test_results_picts/
+/logs/
+/Data/
+/all_mae_result/
+/all_mse_result/
+/all_six_datasets/
+/checkpoints/
+/results_matrics/
+/results_txt/
+*.npz
+*.zip
+*.xml
