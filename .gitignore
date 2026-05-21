@@ -10,3 +10,4 @@
 *.npz
 *.zip
 *.xml
+*.pyc
