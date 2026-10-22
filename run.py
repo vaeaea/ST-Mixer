@@ -59,6 +59,13 @@ parser.add_argument('--layer_num_cnn', type=int, default=3, help='趋势项卷�
 parser.add_argument('--elayer_num', type=int, default=1, help='季节项的层数，patchtst层数')
 parser.add_argument('--dlayer_num', type=int, default=2, help='趋势项的层数')
 
+# TimeMixer 及其衍生变体（STMixer_Seasonal_BU/TD、STMixer_Trend_TD、TimeMixer baseline）使用
+parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers (TimeMixer)')
+parser.add_argument('--down_sampling_layers', type=int, default=0, help='num of down sampling layers')
+parser.add_argument('--down_sampling_window', type=int, default=1, help='down sampling window size')
+parser.add_argument('--down_sampling_method', type=str, default=None,
+                    help='down sampling method, only support avg, max, conv')
+
 parser.add_argument('--norm', type=bool, default=True, help='ReVIN')   
 
 parser.add_argument('--moving_avg',  type=int, nargs = '+',  default=[12,24,48], help='moving_avg') 

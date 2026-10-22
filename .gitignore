@@ -1,13 +1,27 @@
-/test_results_picts/
+# Byte-compiled / cache files
+__pycache__/
+*.pyc
+
+# Experiment artifacts (logs, checkpoints, results, figures)
 /logs/
-/Data/
-/all_mae_result/
-/all_mse_result/
-/all_six_datasets/
 /checkpoints/
+/results/
 /results_matrics/
 /results_txt/
+/all_mae_result/
+/all_mse_result/
+/all_*_result*/
+/test_results_picts/
+*.xml
+
+# Dev scratch
+.superpowers/
+
+# Internal spec/plan docs (contain local absolute paths)
+/docs/
+
+# Data files (too large for git; the loader scripts under Data/ stay tracked)
 *.npz
 *.zip
-*.xml
-*.pyc
+/all_six_datasets/*/*.csv
+/Data/*.csv
