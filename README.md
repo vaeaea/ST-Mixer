@@ -42,7 +42,7 @@ pip install -r requirements.txt
 ```
 ├── Data/                  # data loaders (Data_load.py, Data_load_7dataV3.py)
 ├── Model/
-│   ├── STMixerv5.py       # full ST-Mixer model
+│   ├── STMixer.py         # full ST-Mixer model
 │   ├── ablation/          # §5.6 ablation variants
 │   ├── component_swap/    # Table 7 seasonal-trend swap variants
 │   ├── seasonal_variants/ # Table 8 seasonal component variants

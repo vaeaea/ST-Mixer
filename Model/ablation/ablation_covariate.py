@@ -1,6 +1,6 @@
 # =============================================================================
 # ST-Mixer 论文 §5.6 / Figure 8 消融变体：Covariate（协变量融合模块完全移除，三处全部移除）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Ablation_Covariate（及 super() 调用）。
 #   2. __init__ season_trans 输入维度去掉 +self.t_size（季节分支协变量融合移除）。
 #   3. patch_attention.forward(mode='pre')：删除 x = self.trans(cat([x, y_mark]))（趋势分支协变量融合移除）。

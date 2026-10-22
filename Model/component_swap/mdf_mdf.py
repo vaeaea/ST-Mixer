@@ -1,7 +1,7 @@
 # =============================================================================
 # ST-Mixer 论文 Table 7 / Figure 10 组件交换变体 Case 3：MDF-MDF
 # （Decompose=True；季节、趋势两分支均使用 MDF 多粒度下采样融合模块）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Swap_MDFMDF（及 super() 调用）。
 #   2. __init__ 趋势分支：Linear_Trend 由 Encoder_T（TIE）改为 Encoder_S（MDF，
 #      实参与季节分支一致：sample_fusion/coeff/elayer_num/time_embed_size/

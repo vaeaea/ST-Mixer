@@ -3,9 +3,9 @@
 # （仅替换趋势分支：v5 的趋势局部分支（Encoder_T + Conv_patch + skip_Trend）
 #   → Autoformer 均值法——趋势预测 = 输入趋势项 trend_init 在时间维的均值，
 #   重复到 pred_len；季节性 MDF（Encoder_S + season_trans + skip_Seasonal）、
-#   多尺度分解+线性 padding、协变量融合均与 Model/STMixerv5.py 一致；
+#   多尺度分解+线性 padding、协变量融合均与 Model/STMixer.py 一致；
 #   保持通道独立与参数共享）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Trend_Mean（及 super() 调用）。
 #   2. 趋势分支替换：删除 v5 的 Linear_Trend(Encoder_T) + conv_patch_list +
 #      skip_Trend；前向中 trend_output = trend_init.mean(dim=1, keepdim=True)

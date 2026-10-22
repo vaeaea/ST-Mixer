@@ -1,7 +1,7 @@
 # =============================================================================
 # ST-Mixer 论文 §5.6 / Figure 8 消融变体：TIE（Trend Interaction Extraction 消融，
 # CNN kernel 7→1、stride（论文默认 2，冒烟配置为 4）→1，趋势分支退化为纯 MLP）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Ablation_TIE（及 super() 调用）。
 #   2. __init__ 趋势分支：Encoder_T(..., args.patch_len_list, args.stride_list, ...)
 #      与 Conv_patch(..., args.patch_len_list, args.stride_list, ...) 两处实参

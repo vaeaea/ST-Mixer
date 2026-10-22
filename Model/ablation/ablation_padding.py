@@ -1,6 +1,6 @@
 # =============================================================================
 # ST-Mixer 论文 §5.6 / Figure 8 消融变体：Padding（线性 end-padding 消融，常数首末值 padding 替代）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Ablation_Padding（及 super() 调用）。
 #   2. moving_avg：删除可学习线性 padding（self.endd MLPBlock），改为 front/end 首末值
 #      常数 repeat 后 AvgPool1d（移植自 part1 Model/STMixer_abla_2_v5.py），返回 x 单值。

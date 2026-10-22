@@ -1,6 +1,6 @@
 # =============================================================================
 # ST-Mixer 论文 §5.6 / Figure 8 消融变体：Scale（Multi-scale Series Decomposition Module 消融，单尺度 p=24）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Ablation_Scale（及 super() 调用）。
 #   2. __init__：self.decompsition 的输入由多尺度 kernel 列表 args.moving_avg 改为单尺度 [24]，
 #      其余（含 series_decomp_multi 的均值融合结构）完全不变。

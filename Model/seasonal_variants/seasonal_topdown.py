@@ -2,9 +2,9 @@
 # ST-Mixer 论文 Table 8 / Figure 11 季节性分支替换变体：ST-Mixer-Top-Down (S)
 # （仅替换季节性分支：Encoder_S → TimeMixer 的 PastDecomposableMixing 季节混合，
 #   方向为 Top-Down = coarse-to-fine（粗→细），以论文 §7.2 开头定义为准；
-#   趋势分支 TIE、多尺度分解+线性 padding、协变量融合均与 Model/STMixerv5.py
+#   趋势分支 TIE、多尺度分解+线性 padding、协变量融合均与 Model/STMixer.py
 #   一致；保持通道独立与参数共享）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Seasonal_TD（及 super() 调用）。
 #   2. 季节分支替换：v5 的 Linear_Seasonal(Encoder_S) + season_trans + skip_Seasonal
 #      → Linear_Seasonal=内嵌 TimeMixer（其 PastDecomposableMixing 只做 top-down

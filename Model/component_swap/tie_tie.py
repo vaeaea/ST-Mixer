@@ -1,7 +1,7 @@
 # =============================================================================
 # ST-Mixer 论文 Table 7 / Figure 10 组件交换变体 Case 4：TIE-TIE
 # （Decompose=True；季节、趋势两分支均使用 TIE 趋势信息提取模块）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Swap_TIETIE（及 super() 调用）。
 #   2. __init__ 季节分支：Linear_Seasonal 由 Encoder_S（MDF）改为
 #      Encoder_T（实参与趋势分支一致：dlayer_num/seq_len/pred_len/embed_size/

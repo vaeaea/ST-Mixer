@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 from exp.Main_basic import Exp_Basic
-from Model.STMixerv5 import STMixerv5
+from Model.STMixer import STMixerv5
 from Model.ablation.ablation_tie import STMixer_Ablation_TIE
 from Model.ablation.ablation_scale import STMixer_Ablation_Scale
 from Model.ablation.ablation_padding import STMixer_Ablation_Padding

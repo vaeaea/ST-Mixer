@@ -4,9 +4,9 @@
 #   → MICN 风格单层线性——Linear_Trend = nn.Linear(seq_len, pred_len)，
 #   趋势项直接线性投影到预测区间，无 skip 连接；
 #   季节性 MDF（Encoder_S + season_trans + skip_Seasonal）、多尺度分解+线性
-#   padding、协变量融合均与 Model/STMixerv5.py 一致；
+#   padding、协变量融合均与 Model/STMixer.py 一致；
 #   保持通道独立与参数共享）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Trend_Linear（及 super() 调用）。
 #   2. 趋势分支替换：v5 的 Linear_Trend(Encoder_T) + conv_patch_list +
 #      skip_Trend 整体注释（part1 源文件即如此），

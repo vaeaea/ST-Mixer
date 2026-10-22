@@ -3,8 +3,8 @@
 # （仅替换季节性分支：Encoder_S(多粒度下采样混合) → MTS-Mixer 单尺度下采样
 #   FactorizedTemporalMixing_（sampling_list[0] 单粒度、相位子序列各自 MLP 后交错合并）
 #   + s_pred(seq_len→pred_len)；趋势分支 TIE、多尺度分解+线性 padding、
-#   协变量融合均与 Model/STMixerv5.py 一致；保持通道独立与参数共享）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+#   协变量融合均与 Model/STMixer.py 一致；保持通道独立与参数共享）
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Seasonal_MTS（及 super() 调用）。
 #   2. 季节分支替换：v5 的 Linear_Seasonal(Encoder_S) + season_trans + skip_Seasonal
 #      → Linear_Seasonal=FactorizedTemporalMixing_(seq_len, embed_size, sampling_list[0])

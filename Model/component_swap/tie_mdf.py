@@ -1,14 +1,14 @@
 # =============================================================================
 # ST-Mixer 论文 Table 7 / Figure 10 组件交换变体 Case 2：TIE-MDF
 # （Decompose=True；季节分量走 TIE，趋势分量走 MDF，两分支模块完全对调）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Swap_TIEMDF（及 super() 调用）。
 #   2. encoder 中多尺度分解的返回值接收顺序对调：
 #      `trend_init, seasonal_init, end_paddings_list = self.decompsition(x)`
 #      使 Encoder_S（MDF，含 season_trans + skip_Seasonal）作用于趋势分量
 #      （moving mean）、Encoder_T（TIE，含 conv_patch + skip_Trend）作用于季节分量。
 # 来源说明：part1 的 Model/STMixerv5_cm.py 即该 Case 的实现（模块名与分量名
-#          整体互换，数学逻辑与本文件一致），此处按目标仓库 STMixerv5.py
+#          整体互换，数学逻辑与本文件一致），此处按目标仓库 STMixer.py
 #          为基底逐行复刻 part1 的接线方式，数学逻辑不变。
 # =============================================================================
 import torch

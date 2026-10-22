@@ -5,9 +5,9 @@
 #   混合，方向 = coarse-to-fine（粗→细）：MultiScaleTrendMixing 以
 #   up_sampling_layers 自 coarse 端起步、low->high 逐层上采样聚合，与论文
 #   §7.2 开头定义一致）；季节性 MDF（Encoder_S + season_trans + skip_Seasonal）、
-#   多尺度分解+线性 padding、协变量融合均与 Model/STMixerv5.py 一致；
+#   多尺度分解+线性 padding、协变量融合均与 Model/STMixer.py 一致；
 #   保持通道独立与参数共享）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Trend_TD（及 super() 调用）。
 #   2. 趋势分支替换：v5 的 Linear_Trend(Encoder_T) + conv_patch_list +
 #      skip_Trend → Linear_Trend=内嵌 TimeMixer（输出 (B, pred_len, 1)），

@@ -1,9 +1,9 @@
 # =============================================================================
 # ST-Mixer 论文 Table 8 / Figure 11 季节性分支替换变体：ST-Mixer-Odd-Even (S)
 # （仅替换季节性分支：Encoder_S(多粒度下采样混合) → SCINet 奇偶二分树分解；
-#   趋势分支 TIE、多尺度分解+线性 padding、协变量融合均与 Model/STMixerv5.py 一致；
+#   趋势分支 TIE、多尺度分解+线性 padding、协变量融合均与 Model/STMixer.py 一致；
 #   保持通道独立与参数共享）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Seasonal_SCI（及 super() 调用）。
 #   2. 季节分支替换：v5 的 Linear_Seasonal(Encoder_S) + season_trans + skip_Seasonal
 #      → s_embed(1→embed_size) + SCINet×(1 或 2 层，奇偶二分树) + s_pred

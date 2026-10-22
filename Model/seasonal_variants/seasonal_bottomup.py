@@ -4,8 +4,8 @@
 #   方向为 Bottom-Up = fine-to-coarse（细→粗）：MultiScaleSeasonMixing 以
 #   down_sampling_layers 从 seq_len 逐层线性下采样并自细向粗聚合（part1 代码注释
 #   "mixing high->low" 可证）；趋势分支 TIE、多尺度分解+线性 padding、协变量融合
-#   均与 Model/STMixerv5.py 一致；保持通道独立与参数共享）
-# 与 Model/STMixerv5.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
+#   均与 Model/STMixer.py 一致；保持通道独立与参数共享）
+# 与 Model/STMixer.py 的差异清单（除下列条目外逐行一致；助手类名保持不变）：
 #   1. 主类名 STMixerv5 → STMixer_Seasonal_BU（及 super() 调用）。
 #   2. 季节分支替换：v5 的 Linear_Seasonal(Encoder_S) + season_trans + skip_Seasonal
 #      → Linear_Seasonal=内嵌 TimeMixer（其 PastDecomposableMixing 只做 bottom-up
