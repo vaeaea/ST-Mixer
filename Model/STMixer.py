@@ -2,67 +2,63 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F 
 import math
-class flatten(nn.Module):
-    def forward(self, input):
-        return  torch.reshape(input,(input.size(0), -1))
-    
+
 ############################################################################################################
-#时间序列分解
-class moving_avg(nn.Module):
+#时间序列分解（论文 §4.1 Multi-scale Series Decomposition Module）
+class MovingAverage(nn.Module):
     """
     Moving average block to highlight the trend of time series
     """
     def __init__(self, kernel_size, stride, decomp_len, seq_len):
-        super(moving_avg, self).__init__()
+        super(MovingAverage, self).__init__()
         self.kernel_size = kernel_size
         self.decomp_len = decomp_len
         self.seq_len = seq_len
         self.avg = nn.AvgPool1d(kernel_size=kernel_size, stride=stride, padding=0)
-        # self.endd = nn.Linear(self.decomp_len,math.floor((self.kernel_size - 1) // 2)) 
-        self.endd = MLPBlock(self.decomp_len, self.decomp_len//2 , math.floor((self.kernel_size - 1) // 2), mlp_mode=2)
+        self.end_padding = MLPBlock(self.decomp_len, self.decomp_len//2 , math.floor((self.kernel_size - 1) // 2), mlp_mode=2)
     def forward(self, x):
-        end = self.endd( x.transpose(1,2)).transpose(1,2)
+        end = self.end_padding( x.transpose(1,2)).transpose(1,2)
         self.end = end
         x = torch.cat([x, end], dim=1)
         x = self.avg(x.permute(0, 2, 1))
         x = x.permute(0, 2, 1)
         return x, end
 
-#单尺度分解
-class series_decomp(nn.Module):
+#单尺度分解（moving average，论文 §4.1）
+class SingleScaleDecomposition(nn.Module):
     """
     Series decomposition block
     """
     def __init__(self, kernel_size, decomp_len, seq_len):
-        super(series_decomp, self).__init__()
+        super(SingleScaleDecomposition, self).__init__()
         self.decomp_len = decomp_len
         self.seq_len = seq_len
-        self.moving_avg = moving_avg(kernel_size, 1, decomp_len, seq_len)
+        self.moving_avg = MovingAverage(kernel_size, 1, decomp_len, seq_len)
 
     def forward(self, x):
         moving_mean,end_padding= self.moving_avg(x) 
         res = x[:,-moving_mean.shape[1]:,:] - moving_mean
         return res[:,-self.seq_len:,:], moving_mean[:,-self.seq_len:,:],end_padding
 
-#多尺度分解
-class series_decomp_multi(nn.Module):
+#多尺度分解（论文 §4.1 Multi-scale Series Decomposition Module）
+class MultiScaleSeriesDecomposition(nn.Module):
     """
     Multiple Series decomposition block 
     """
     def __init__(self, kernel_size, decomp_len, seq_len):
-        super(series_decomp_multi, self).__init__()
+        super(MultiScaleSeriesDecomposition, self).__init__()
         self.kernel_size = kernel_size
         self.decomp_len = decomp_len
         self.seq_len = seq_len
-        self.series_decomp =  nn.ModuleList([series_decomp(kernel, decomp_len, seq_len) for kernel in kernel_size])
+        self.series_decomp =  nn.ModuleList([SingleScaleDecomposition(kernel, decomp_len, seq_len) for kernel in kernel_size])
     def forward(self, x): 
         x = x
         moving_mean = []
         res = []
         end_paddings = []
         for func in self.series_decomp:
-            sea, moving_avg, end_padding = func(x)
-            moving_mean.append(moving_avg)
+            sea, trend, end_padding = func(x)
+            moving_mean.append(trend)
             res.append(sea)
             end_paddings.append(end_padding)
 
@@ -73,7 +69,7 @@ class series_decomp_multi(nn.Module):
         return sea , moving_mean , end_paddings
 
 ############################################################################################################
-#对季节项下采样
+#季节分支子模块（论文 §4.2 Seasonal Multi-downsampling Fusion Module）
 
 class MLPBlock(nn.Module):
     def __init__(self, input_dim, mlp_dim, output_dim, dropout=0.1, mlp_mode=1) :
@@ -93,8 +89,8 @@ class MLPBlock(nn.Module):
         elif self.mlp_mode==1:
             return self.fc1(x)
         
-#单一粒度下采样        
-class FactorizedTemporalMixing(nn.Module):
+#单一粒度下采样模块（论文 §4.2 Downsampling Module，Figure 5）
+class DownsamplingModule(nn.Module):
     def __init__(self, sample_fusion, sampling_list, current_layer, coeff, seq_len, pred_len, sampling, dropout, singe_sample_dim, mode='pre') :
         super().__init__()
         self.mode = mode
@@ -124,11 +120,6 @@ class FactorizedTemporalMixing(nn.Module):
     def forward(self, x): 
         if self.mode=='pre':
             x = x.transpose(1,2) #(B,C,T)
-            x_samp = []   
-            # for i in range(len(self.temporal_fac)):
-                # x_samp.append(  torch.reshape(self.temporal_fac[i](flatten()(x[:, :, i::self.sampling])), (-1,self.singe_sample_dim,self.seq_len // self.sampling))  )
-                #  #(B,C,T)
-
             x_to_trans = torch.stack([x[:, :, i::self.sampling] for i in range(self.sampling)],dim=1).view(x.shape[0], self.sampling, -1)  # (B,S,C*T/S)
             x = torch.reshape(torch.reshape(self.temporal_fac(x_to_trans), (x.shape[0], self.sampling, self.singe_sample_dim, self.seq_len // self.sampling)).permute(0,2,3,1), (x.shape[0], self.singe_sample_dim,-1) ).transpose(1,2) #(B,T,C)
 
@@ -145,8 +136,8 @@ class FactorizedTemporalMixing(nn.Module):
             
             
             
-#下采样融合模块            
-class EncoderLayer(nn.Module):
+#下采样融合层（论文 §4.2：multi-downsampling fusion module 的一层，merge 即 Parallel Fusion MLP_V）
+class MultiDownsamplingFusionLayer(nn.Module):
     def __init__(self, sample_fusion, coeff, t_size, time_embed_size, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, mode, singe_sample_dim, current_layer = None):
         super().__init__() 
         self.sampling_list = sampling_list      
@@ -154,7 +145,7 @@ class EncoderLayer(nn.Module):
         self.coeff = coeff
         Fact_list = []
         for i in range(len(sampling_list)):
-            Fact_list.append(FactorizedTemporalMixing(sample_fusion, sampling_list, current_layer, coeff, seq_len, pred_len, sampling_list[i], dropout, singe_sample_dim, mode))
+            Fact_list.append(DownsamplingModule(sample_fusion, sampling_list, current_layer, coeff, seq_len, pred_len, sampling_list[i], dropout, singe_sample_dim, mode))
         self.Fact_list = nn.ModuleList(Fact_list)
         
         if mode=='trans':
@@ -168,8 +159,8 @@ class EncoderLayer(nn.Module):
             x_pre = self.merge(    torch.cat(x_pre,-1)   ) #对不同下采样细粒度的处理结果进行合并
         return x_pre
 
-#季节项处理部分
-class Encoder_S(nn.Module):
+#季节项处理部分（论文 §4.2 Seasonal Multi-downsampling Fusion Module，堆叠 M_s 层）
+class SeasonalMultiDownsamplingFusion(nn.Module):
     def __init__(self, sample_fusion, coeff, layer_num, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, time_embed_size, t_size,singe_sample_dim):
         super().__init__() 
         self.sampling_list = sampling_list      
@@ -177,11 +168,11 @@ class Encoder_S(nn.Module):
         Fact_list = []
         if layer_num>1:
             for i in range(layer_num-1):
-                Fact_list.append(EncoderLayer(sample_fusion, coeff, t_size, time_embed_size, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, 'trans', singe_sample_dim,current_layer = i))  #trans:中间层不需要进行预测,,current_layer从0开始计数，等于0时，将影响到FactorizedTemporalMixing的输入的维度。
-            Fact_list.append(EncoderLayer(sample_fusion, coeff, t_size, time_embed_size, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, 'pre',singe_sample_dim))  #pre:最后一层不需要进行预测
+                Fact_list.append(MultiDownsamplingFusionLayer(sample_fusion, coeff, t_size, time_embed_size, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, 'trans', singe_sample_dim,current_layer = i))  #trans:中间层不进行预测；current_layer=0 时输入维度不同，将影响到 DownsamplingModule 的输入维度。
+            Fact_list.append(MultiDownsamplingFusionLayer(sample_fusion, coeff, t_size, time_embed_size, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, 'pre',singe_sample_dim))  #pre:最后一层进行预测
             
         elif layer_num==1:
-            Fact_list.append(EncoderLayer(sample_fusion, coeff, t_size, time_embed_size, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, 'pre',singe_sample_dim, current_layer = 0))
+            Fact_list.append(MultiDownsamplingFusionLayer(sample_fusion, coeff, t_size, time_embed_size, embed_size, output_size, seq_len, pred_len, sampling_list, dropout, 'pre',singe_sample_dim, current_layer = 0))
         
         
         self.Fact_list = nn.ModuleList(Fact_list) 
@@ -194,10 +185,10 @@ class Encoder_S(nn.Module):
 
     
 ###############################################################################################################    
-#进行局部信息的提取
-class Conv_patch(nn.Module):
+#趋势分支 patching（论文 §4.3 Single-scale Patching）
+class SingleScalePatching(nn.Module):
     def __init__(self, in_channels, out_channels, patch_len, stride, layer_num_cnn):
-        super(Conv_patch, self).__init__()
+        super(SingleScalePatching, self).__init__()
  
         self.conv_patch = nn.Sequential(nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=patch_len, stride = stride),
                                         *[nn.Conv1d(in_channels=out_channels, out_channels=out_channels, kernel_size=patch_len, stride = stride)]*(layer_num_cnn-1))
@@ -206,10 +197,10 @@ class Conv_patch(nn.Module):
         x_patch = self.conv_patch(x.transpose(1,2)).transpose(1,2)
         return x_patch
 
-#通过两组MLP进行局部信息内部和外部的交互    
-class patch_attention(nn.Module):
+#通过两组MLP进行局部信息patch内/patch间交互（论文 §4.3 Trend Information Extraction Module 内部结构）
+class PatchMixing(nn.Module):
     def __init__(self, t_size, time_embed_size, seq_len, pred_len, embed_size, patch_len_list, stride_list, layer_num_cnn, mode='pre'):
-        super(patch_attention, self).__init__()
+        super(PatchMixing, self).__init__()
         self.patch_len_list = patch_len_list
         self.stride_list = stride_list 
         self.pred_len = pred_len
@@ -235,16 +226,16 @@ class patch_attention(nn.Module):
             x = self.trans(torch.cat([x,y_mark],-1))
         return x   
     
- #趋势项处理部分
-class Encoder_T(nn.Module):
+ #趋势项处理部分（论文 §4.3 Trend Information Extraction Module，堆叠 M_t 层）
+class TrendInformationExtraction(nn.Module):
     def __init__(self, layer_num, seq_len, pred_len, embed_size, patch_len_list, stride_list ,time_embed_size, t_size,layer_num_cnn):
         super().__init__()    
         self.layer_num = layer_num   
         Fact_list = []
         if layer_num>1:
             for i in range(layer_num-1):
-                Fact_list.append(patch_attention(t_size, time_embed_size, seq_len, pred_len, embed_size, patch_len_list, stride_list, layer_num_cnn,mode='trans'))
-        Fact_list.append(patch_attention(t_size, time_embed_size, seq_len, pred_len, embed_size, patch_len_list, stride_list, layer_num_cnn, mode='pre'))
+                Fact_list.append(PatchMixing(t_size, time_embed_size, seq_len, pred_len, embed_size, patch_len_list, stride_list, layer_num_cnn,mode='trans'))
+        Fact_list.append(PatchMixing(t_size, time_embed_size, seq_len, pred_len, embed_size, patch_len_list, stride_list, layer_num_cnn, mode='pre'))
         self.Fact_list = nn.ModuleList(Fact_list)
   
     def forward(self, x, y_mark):  # (B,T,d_model)
@@ -275,29 +266,29 @@ class STMixerv5(nn.Module):
         self.t_size = args.t_size
         self.time_embed_size = args.time_embed_size
         self.coeff = self.args.coeff
-        self.decompsition = series_decomp_multi(args.moving_avg,args.decomp_len,args.seq_len)  
-        # self.decompsition = DFT_series_decomp(top_k=3)  
+        self.decomposition = MultiScaleSeriesDecomposition(args.moving_avg,args.decomp_len,args.seq_len)
         if self.args.elayer_num>=1:
-            self.Linear_Seasonal = Encoder_S(args.sample_fusion, args.coeff, args.elayer_num, args.time_embed_size, args.output_size, self.seq_len, args.pred_len, args.sampling_list, args.dropout, self.time_embed_size, self.t_size, args.singe_sample_dim)
-            self.season_trans = MLPBlock(len(args.sampling_list)*args.singe_sample_dim+self.t_size,self.args.sample_embed_size,1,args.dropout,2)
+            self.seasonal_mdf = SeasonalMultiDownsamplingFusion(args.sample_fusion, args.coeff, args.elayer_num, args.time_embed_size, args.output_size, self.seq_len, args.pred_len, args.sampling_list, args.dropout, self.time_embed_size, self.t_size, args.singe_sample_dim)
+            self.seasonal_covariate_fusion = MLPBlock(len(args.sampling_list)*args.singe_sample_dim+self.t_size,self.args.sample_embed_size,1,args.dropout,2)
             self.skip_Seasonal = nn.Linear(self.seq_len, self.pred_len)
             #self.sea_norm = nn.LayerNorm([self.pred_len,1])
         else:
-            self.Linear_Seasonal = nn.Linear(self.seq_len, self.pred_len)
+            self.seasonal_mdf = nn.Linear(self.seq_len, self.pred_len)
         
         if self.args.dlayer_num>=1:
-            self.Linear_Trend = Encoder_T(args.dlayer_num, self.seq_len, args.pred_len, args.embed_size, args.patch_len_list, args.stride_list ,self.time_embed_size, self.t_size, args.layer_num_cnn)
+            self.trend_tie = TrendInformationExtraction(args.dlayer_num, self.seq_len, args.pred_len, args.embed_size, args.patch_len_list, args.stride_list ,self.time_embed_size, self.t_size, args.layer_num_cnn)
             #self.conv_patch_list = nn.Conv1d(in_channels=1+self.t_size, out_channels= args.time_embed_size, kernel_size= args.patch_len_list, stride =  args.stride_list)
             #self.conv_patch_list = nn.Conv1d(in_channels=1, out_channels= args.embed_size, kernel_size= args.patch_len_list, stride =  args.stride_list)
-            self.conv_patch_list = Conv_patch(1, args.embed_size, args.patch_len_list, args.stride_list, args.layer_num_cnn)
+            self.conv_patch_list = SingleScalePatching(1, args.embed_size, args.patch_len_list, args.stride_list, args.layer_num_cnn)
             self.skip_Trend = nn.Linear(self.seq_len, self.pred_len)
             #self.tre_norm = nn.LayerNorm([self.pred_len,1])
         else:
-            self.Linear_Trend = nn.Linear(self.seq_len, self.pred_len)
+            self.trend_tie = nn.Linear(self.seq_len, self.pred_len)
             
-        self.markx = TimeFeatureEmbedding(self.t_size, args.mark_size)
-        self.marky = TimeFeatureEmbedding(self.t_size, args.mark_size)
-        self.x_trans = MLPBlock(1+self.t_size,args.time_embed_size,1,args.dropout,2)
+        #时间特征嵌入与协变量融合（论文 §4.4 Covariate Fusion Module）
+        self.x_mark_embed = TimeFeatureEmbedding(self.t_size, args.mark_size)
+        self.y_mark_embed = TimeFeatureEmbedding(self.t_size, args.mark_size)
+        self.covariate_fusion = MLPBlock(1+self.t_size,args.time_embed_size,1,args.dropout,2)
     def encoder(self, x, x_mark, y_mark): 
         if self.args.norm==True:
             means = x[:,-self.seq_len:].mean(1, keepdim=True).detach() #B, T, N
@@ -316,30 +307,29 @@ class STMixerv5(nn.Module):
         B,T,M = x_mark.shape        
         x_mark = x_mark.unsqueeze(1).repeat(1,C,1,1).reshape(B*C,T,M)[:,-self.seq_len:]  
         
-        y_mark = self.marky(y_mark)
-        x_mark = self.markx(x_mark) #（B，V，4）
+        y_mark = self.y_mark_embed(y_mark)
+        x_mark = self.x_mark_embed(x_mark) #（B，V，4）
        
-        # seasonal_init, trend_init = self.decompsition(x.to(torch.device('cuda:{}'.format(self.args.gpu))))   #（B,T,V） 
-        seasonal_init, trend_init, end_paddings_list = self.decompsition(x)   #（B,T,V） 
+        seasonal_init, trend_init, end_paddings_list = self.decomposition(x)   #（B,T,V）
   
         #对季节项进行下采样处理
         if self.args.elayer_num>=1:
-            seasonal_output = self.Linear_Seasonal(seasonal_init, x_mark)  #x_mark  
-            seasonal_output = self.season_trans(torch.cat([torch.cat(seasonal_output,-1),y_mark],-1)) + self.skip_Seasonal(seasonal_init.transpose(1,2)).transpose(1,2) 
+            seasonal_output = self.seasonal_mdf(seasonal_init, x_mark)  #x_mark  
+            seasonal_output = self.seasonal_covariate_fusion(torch.cat([torch.cat(seasonal_output,-1),y_mark],-1)) + self.skip_Seasonal(seasonal_init.transpose(1,2)).transpose(1,2) 
             
         else:
-            seasonal_output = self.Linear_Seasonal(seasonal_init.permute( 0, 2, 1)).permute( 0, 2, 1)
+            seasonal_output = self.seasonal_mdf(seasonal_init.permute( 0, 2, 1)).permute( 0, 2, 1)
             
         #对趋势项进行局部处理
         if self.args.dlayer_num>=1:  
             trend_init_patch = self.conv_patch_list( trend_init) #(B,PATCH,d_model) CNN
             
-            trend_output =  self.Linear_Trend(trend_init_patch, y_mark) + self.skip_Trend(trend_init.transpose(1,2)).transpose(1,2) #mlp*2
+            trend_output =  self.trend_tie(trend_init_patch, y_mark) + self.skip_Trend(trend_init.transpose(1,2)).transpose(1,2) #mlp*2
         else:
-            trend_output = self.Linear_Trend(trend_init.transpose(1,2)).transpose(1,2)
-        #融合后进行时间信息加强
+            trend_output = self.trend_tie(trend_init.transpose(1,2)).transpose(1,2)
+        #融合后进行时间信息加强（论文 §4.4 Covariate Fusion Module）
         x = seasonal_output + trend_output  
-        x = self.x_trans(torch.cat([x,y_mark],-1) )
+        x = self.covariate_fusion(torch.cat([x,y_mark],-1) )
         
         
         x = x.reshape(B,C,self.args.pred_len).transpose(1,2) 
