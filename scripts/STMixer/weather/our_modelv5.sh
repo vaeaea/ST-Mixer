@@ -18,7 +18,7 @@ seq_len=336
 elayer_num=1
 dlayer_num=2
 
-for random_seed in  2021 2022 2023
+for random_seed in 2021 2022 2023
 do
     for pred_len in 96 192 336 720
     do

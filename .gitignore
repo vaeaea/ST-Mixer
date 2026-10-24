@@ -23,5 +23,5 @@ __pycache__/
 # Data files (too large for git; the loader scripts under Data/ stay tracked)
 *.npz
 *.zip
-/all_six_datasets/*/*.csv
+/all_six_datasets/
 /Data/*.csv

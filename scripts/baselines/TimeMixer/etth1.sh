@@ -9,7 +9,7 @@ mkdir -p logs/TimeMixer/ETTh1
 model_name=TimeMixer
 Dataset=ETTh1
 seq_len=336
-for random_seed in 2024
+for random_seed in 2021 2022 2023
 do
     for pred_len in 96 192 336 720
     do

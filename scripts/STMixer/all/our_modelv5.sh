@@ -19,9 +19,9 @@ Dataset=all
 seq_len=336
 elayer_num=1
 
-for random_seed in 2021 
+for random_seed in 2021 2022 2023
 do
-    for pred_len in 96 
+    for pred_len in 96 192 336 720
     do
         python -u run_all.py \
           --random_seed $random_seed\

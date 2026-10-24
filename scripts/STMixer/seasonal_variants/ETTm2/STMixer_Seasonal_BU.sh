@@ -12,7 +12,7 @@ mkdir -p logs/STMixer_Seasonal_BU/ETTm2_slim
 model_name=STMixer_Seasonal_BU
 Dataset=ETTm2
 seq_len=336
-for random_seed in 2021
+for random_seed in 2021 2022 2023
 do
     for pred_len in 96 192 336 720
     do

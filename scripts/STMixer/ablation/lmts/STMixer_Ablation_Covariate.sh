@@ -9,7 +9,7 @@ mkdir -p logs/STMixer_Ablation_Covariate/lmts
 model_name=STMixer_Ablation_Covariate
 Dataset=all
 seq_len=336
-for random_seed in 2021
+for random_seed in 2021 2022 2023
 do
     for pred_len in 96 192 336 720
     do

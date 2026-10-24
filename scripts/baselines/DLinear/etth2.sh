@@ -9,7 +9,7 @@ mkdir -p logs/DLinear/ETTh2
 model_name=DLinear
 Dataset=ETTh2
 seq_len=336
-for random_seed in 2021
+for random_seed in 2021 2022 2023
 do
     for pred_len in 96 192 336 720
     do

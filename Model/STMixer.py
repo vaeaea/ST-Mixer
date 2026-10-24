@@ -6,34 +6,6 @@ class flatten(nn.Module):
     def forward(self, input):
         return  torch.reshape(input,(input.size(0), -1))
     
-
-    
-    
-class DFT_series_decomp(nn.Module):
-    """
-    Series decomposition block
-    """
-
-    def __init__(self, top_k=5):
-        super(DFT_series_decomp, self).__init__()
-        self.top_k = top_k
-
-    def forward(self, x):
-        x = x[:,-336:,:]
-        x = torch.transpose(x,1,2)
-        xf = torch.fft.rfft(x)
-        freq = abs(xf)
-        freq[:,:,0] = 0 
-        top_k_freq, top_list = torch.topk(freq, self.top_k)
-        xf[freq < torch.min(top_k_freq, dim=-1, keepdim=True)[0]] = 0
-        x_season = torch.fft.irfft(xf)
-        x_trend = x - x_season
-        x_season = torch.transpose(x_season,1,2)
-        x_trend = torch.transpose(x_trend,1,2)
-        self.x_season = x_season
-        self.x_trend = x_trend
-        return x_season, x_trend    
-    
 ############################################################################################################
 #时间序列分解
 class moving_avg(nn.Module):
