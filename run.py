@@ -68,7 +68,10 @@ parser.add_argument('--down_sampling_method', type=str, default=None,
 
 parser.add_argument('--norm', type=bool, default=True, help='ReVIN')   
 
-parser.add_argument('--moving_avg',  type=int, nargs = '+',  default=[12,24,48], help='moving_avg') 
+parser.add_argument('--moving_avg',  type=int, nargs = '+',  default=[12,24,48], help='moving_avg')
+
+parser.add_argument('--alpha', type=float, default=0.95, help='MixLinear: exponential moving average coefficient')
+parser.add_argument('--lpf', type=int, default=15, help='MixLinear: low-pass filter size')
 
 parser.add_argument('--factor', type=int, default=3, help='attn factor')
 parser.add_argument('--output_attention', action='store_true', help='whether to output attention in ecoder')
